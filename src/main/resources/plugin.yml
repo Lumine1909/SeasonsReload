@@ -1,0 +1,16 @@
+name: SeasonsReload
+version: 1.1
+main: io.github.lumine1909.Seasons
+api-version: 1.20
+load: STARTUP
+authors:
+  - Lumine1909
+permissions:
+  season.enable:
+    default: op
+  season.disable:
+    default: op
+  season.date.get:
+    default: true
+  season.date.set:
+    default: op

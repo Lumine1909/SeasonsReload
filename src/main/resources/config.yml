@@ -1,0 +1,6 @@
+settings:
+  global-season: true
+seed:
+  global: 0
+  worlds:
+    world: -1
