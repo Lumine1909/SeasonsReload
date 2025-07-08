@@ -1,14 +1,14 @@
-package io.github.lumine1909.listener;
+package io.github.lumine1909.seasonsreload.listener;
 
-import io.github.lumine1909.injector.PacketListenerInjector;
-import io.github.lumine1909.util.Wrapper;
+import io.github.lumine1909.seasonsreload.injector.PacketInjector;
+import io.github.lumine1909.seasonsreload.util.Wrapper;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import static io.github.lumine1909.Seasons.plugin;
+import static io.github.lumine1909.seasonsreload.SeasonsPlugin.plugin;
 
 public class JoinQuitListener implements Listener {
 
@@ -18,7 +18,8 @@ public class JoinQuitListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
-        PacketListenerInjector.inject(e.getPlayer());
+        Wrapper.of(e.getPlayer());
+        PacketInjector.injectPlayer(e.getPlayer());
     }
 
     @EventHandler

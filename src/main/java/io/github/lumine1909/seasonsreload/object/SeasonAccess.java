@@ -1,4 +1,4 @@
-package io.github.lumine1909.object;
+package io.github.lumine1909.seasonsreload.object;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.MappedRegistry;
@@ -14,18 +14,12 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import static io.github.lumine1909.util.Reflection.*;
+import static io.github.lumine1909.seasonsreload.util.Reflection.field$MappedRegistry$frozen;
+import static io.github.lumine1909.seasonsreload.util.Reflection.field$MappedRegistry$unregIntrHolder;
 
 public record SeasonAccess(Holder<Biome> spring, Holder<Biome> summer, Holder<Biome> autumn, Holder<Biome> winter) {
 
     private final static Map<Biome, SeasonAccess> seasonAccessMap = new HashMap<>();
-
-    public enum Type {
-        SPRING,
-        SUMMER,
-        AUTUMN,
-        WINTER
-    }
 
     public static SeasonAccess getFrom(Biome base) {
         return seasonAccessMap.get(base);
@@ -42,7 +36,7 @@ public record SeasonAccess(Holder<Biome> spring, Holder<Biome> summer, Holder<Bi
             //.ambientAdditionsSound(base.getSpecialEffects().getAmbientAdditionsSettings().orElse(null))
             //.ambientLoopSound(base.getSpecialEffects().getAmbientLoopSoundEvent().orElse(null))
             //.ambientMoodSound(base.getSpecialEffects().getAmbientMoodSettings().orElse(null))
-            .backgroundMusic(base.getBackgroundMusic().orElse(null))
+            //.backgroundMusic(base.getBackgroundMusic().orElse(null))
             //.ambientParticle(base.getSpecialEffects().getAmbientParticleSettings().orElse(null))
             .grassColorModifier(base.getSpecialEffects().getGrassColorModifier())
             .skyColor(base.getSkyColor())
@@ -63,7 +57,7 @@ public record SeasonAccess(Holder<Biome> spring, Holder<Biome> summer, Holder<Bi
         foliaColor[0] = (Math.clamp(r - 10, 0, 255) << 16) | (Math.clamp(g + 15, 0, 255) << 8) | Math.clamp(b, 0, 255);
         foliaColor[1] = (Math.clamp(r - 15, 0, 255) << 16) | (Math.clamp(g + 25, 0, 255) << 8) | Math.clamp(b, 0, 255);
         foliaColor[2] = (Math.clamp(r + 65, 0, 255) << 16) | (Math.clamp(g - 30, 0, 255) << 8) | Math.clamp(b - 20, 0, 255);
-        foliaColor[3] = (Math.clamp(r + 95, 0, 255) << 16) | (Math.clamp(g + 25, 0, 255) << 8) | Math.clamp(b + 140, 0, 255);
+        foliaColor[3] = (Math.clamp(r + 95, 0, 255) << 16) | (Math.clamp(g + 65, 0, 255) << 8) | Math.clamp(b + 140, 0, 255);
 
         r = baseGrassColor >> 16 & 0xFF;
         g = baseGrassColor >> 8 & 0xFF;
@@ -71,9 +65,9 @@ public record SeasonAccess(Holder<Biome> spring, Holder<Biome> summer, Holder<Bi
         grassColor[0] = (Math.clamp(r - 10, 0, 255) << 16) | (Math.clamp(g + 20, 0, 255) << 8) | Math.clamp(b, 0, 255);
         grassColor[1] = (Math.clamp(r - 15, 0, 255) << 16) | (Math.clamp(g + 30, 0, 255) << 8) | Math.clamp(b, 0, 255);
         grassColor[2] = (Math.clamp(r + 60, 0, 255) << 16) | (Math.clamp(g - 30, 0, 255) << 8) | Math.clamp(b - 20, 0, 255);
-        grassColor[3] = (Math.clamp(r + 95, 0, 255) << 16) | (Math.clamp(g + 30, 0, 255) << 8) | Math.clamp(b + 140, 0, 255);
+        grassColor[3] = (Math.clamp(r + 95, 0, 255) << 16) | (Math.clamp(g + 60, 0, 255) << 8) | Math.clamp(b + 140, 0, 255);
 
-        Holder<Biome> spring = register(
+        Holder<Biome> spring = registerOrGet(
             base,
             builder.specialEffects(
                 builder1
@@ -81,7 +75,7 @@ public record SeasonAccess(Holder<Biome> spring, Holder<Biome> summer, Holder<Bi
                     .foliageColorOverride(foliaColor[0]).build()
             ).build(), Type.SPRING
         );
-        Holder<Biome> summer = register(
+        Holder<Biome> summer = registerOrGet(
             base,
             builder.specialEffects(
                 builder1
@@ -89,7 +83,7 @@ public record SeasonAccess(Holder<Biome> spring, Holder<Biome> summer, Holder<Bi
                     .foliageColorOverride(foliaColor[1]).build()
             ).build(), Type.SUMMER
         );
-        Holder<Biome> autumn = register(
+        Holder<Biome> autumn = registerOrGet(
             base,
             builder.specialEffects(
                 builder1
@@ -97,7 +91,7 @@ public record SeasonAccess(Holder<Biome> spring, Holder<Biome> summer, Holder<Bi
                     .foliageColorOverride(foliaColor[2]).build()
             ).build(), Type.AUTUMN
         );
-        Holder<Biome> winter = register(
+        Holder<Biome> winter = registerOrGet(
             base,
             builder.specialEffects(
                 builder1
@@ -110,18 +104,19 @@ public record SeasonAccess(Holder<Biome> spring, Holder<Biome> summer, Holder<Bi
         return access;
     }
 
-    private static Holder<Biome> register(Biome base, Biome biome, Type season) {
-        MappedRegistry<Biome> registry = (MappedRegistry<Biome>) MinecraftServer.getServer().registryAccess().registryOrThrow(Registries.BIOME);
+    private static Holder<Biome> registerOrGet(Biome base, Biome biome, Type season) {
+        MappedRegistry<Biome> registry = (MappedRegistry<Biome>) MinecraftServer.getServer().registryAccess().lookup(Registries.BIOME).orElseThrow();
         String name = registry.getResourceKey(base).orElseThrow().location().toString().replaceAll(":", "_") + "_" + season.name().toLowerCase();
-        FMappedRegistry_unreginstholder.set(registry, new IdentityHashMap<>());
-        FMappedRegistry_frozen.set(registry, false);
+        ResourceLocation newLocation = ResourceLocation.fromNamespaceAndPath("seasons", name);
+        if (registry.get(newLocation).isPresent()) {
+            return registry.get(newLocation).get();
+        }
+        field$MappedRegistry$unregIntrHolder.set(registry, new IdentityHashMap<>());
+        field$MappedRegistry$frozen.set(registry, false);
         registry.createIntrusiveHolder(biome);
-        Holder.Reference<Biome> biomeReference = registry.register(ResourceKey.create(
-            Registries.BIOME,
-            new ResourceLocation("seasons", name)
-        ), biome, RegistrationInfo.BUILT_IN);
-        FMappedRegistry_frozen.set(registry, true);
-        FMappedRegistry_unreginstholder.set(registry, null);
+        Holder.Reference<Biome> biomeReference = registry.register(ResourceKey.create(Registries.BIOME, newLocation), biome, RegistrationInfo.BUILT_IN);
+        field$MappedRegistry$frozen.set(registry, true);
+        field$MappedRegistry$unregIntrHolder.set(registry, null);
         return biomeReference;
     }
 
@@ -141,5 +136,12 @@ public record SeasonAccess(Holder<Biome> spring, Holder<Biome> summer, Holder<Bi
             }
             default -> throw new RuntimeException();
         }
+    }
+
+    public enum Type {
+        SPRING,
+        SUMMER,
+        AUTUMN,
+        WINTER
     }
 }

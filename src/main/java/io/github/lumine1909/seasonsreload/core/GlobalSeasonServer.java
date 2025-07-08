@@ -1,29 +1,26 @@
-package io.github.lumine1909.core;
+package io.github.lumine1909.seasonsreload.core;
 
-import io.github.lumine1909.object.World;
+import io.github.lumine1909.seasonsreload.object.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.github.lumine1909.Seasons.plugin;
-
 public class GlobalSeasonServer extends BukkitRunnable {
 
-    public static GlobalSeasonServer spin(long seed, boolean globalSeed) {
-        GlobalSeasonServer server = new GlobalSeasonServer(seed, globalSeed);
-        server.runTaskTimer(plugin, 0, 1);
-        return server;
-    }
-
-    private long seed;
     private final boolean globalSeed;
     private final Map<World, LevelSeasonServer> levelServers = new HashMap<>();
+    private long seed;
 
     public GlobalSeasonServer(long seed, boolean globalSeed) {
         this.seed = seed;
         this.globalSeed = globalSeed;
+    }
+
+    public static GlobalSeasonServer spin(long seed, boolean globalSeed) {
+        GlobalSeasonServer server = new GlobalSeasonServer(seed, globalSeed);
+        return server;
     }
 
     public void addLevel(LevelSeasonServer seasonServer) {
@@ -42,9 +39,9 @@ public class GlobalSeasonServer extends BukkitRunnable {
         config.set("seed.global", seed);
         for (LevelSeasonServer server : levelServers.values()) {
             if (globalSeed) {
-                config.set("seed.worlds." + server.getWorld().getWorld().getName(), -1);
+                config.set("seed.worlds." + server.getWorld(), -1);
             } else {
-                config.set("seed.worlds." + server.getWorld().getWorld().getName(), server.getSeasonSeed());
+                config.set("seed.worlds." + server.getWorld(), server.getSeasonSeed());
             }
         }
     }

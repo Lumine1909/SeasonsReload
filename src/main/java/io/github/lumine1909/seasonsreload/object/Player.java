@@ -1,6 +1,6 @@
-package io.github.lumine1909.object;
+package io.github.lumine1909.seasonsreload.object;
 
-import io.github.lumine1909.util.Wrapper;
+import io.github.lumine1909.seasonsreload.util.Wrapper;
 import net.minecraft.network.protocol.game.ClientboundChunksBiomesPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,7 +21,7 @@ public class Player {
     }
 
     public void sendChunkBiome(int x, int z) {
-        ServerLevel sl = getNMSPlayer().serverLevel();
+        ServerLevel sl = getNMSPlayer().level();
         getNMSPlayer().connection.send(ClientboundChunksBiomesPacket.forChunks(List.of(sl.getChunk(x, z))));
     }
 

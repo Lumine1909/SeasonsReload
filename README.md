@@ -1,3 +1,3 @@
-Season plugin for paper 1.20.5+
+A experimental season plugin for paper 1.21.7.
 
-"Reload" is only the name, there are nothing to reload
+"Reload" is only the name, there are nothing to reload.

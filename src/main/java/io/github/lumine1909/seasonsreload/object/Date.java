@@ -1,10 +1,15 @@
-package io.github.lumine1909.object;
+package io.github.lumine1909.seasonsreload.object;
 
 import java.util.List;
 
 public record Date(int month, int day) {
 
     private final static List<Integer> dayOfMonth = List.of(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 114514);
+
+    public Date {
+        if (month > 12 || month < 0) throw new RuntimeException();
+        if (day < 0 || day > dayOfMonth.get(month - 1)) throw new RuntimeException();
+    }
 
     public static Date of(int dayOfYear) {
         int index = 0;
@@ -17,11 +22,6 @@ public record Date(int month, int day) {
 
     public static Date fromTickLong(long seed) {
         return of((int) (seed / 24000 % 365 + 1));
-    }
-
-    public Date {
-        if (month > 12 || month < 0) throw new RuntimeException();
-        if (day < 0 || day > dayOfMonth.get(month - 1)) throw new RuntimeException();
     }
 
     public int getDayOfYear() {

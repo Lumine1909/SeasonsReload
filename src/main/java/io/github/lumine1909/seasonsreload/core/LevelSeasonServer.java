@@ -1,8 +1,8 @@
-package io.github.lumine1909.core;
+package io.github.lumine1909.seasonsreload.core;
 
-import io.github.lumine1909.object.Date;
-import io.github.lumine1909.object.SeasonAccess;
-import io.github.lumine1909.object.World;
+import io.github.lumine1909.seasonsreload.object.Date;
+import io.github.lumine1909.seasonsreload.object.SeasonAccess;
+import io.github.lumine1909.seasonsreload.object.World;
 
 public class LevelSeasonServer {
 
