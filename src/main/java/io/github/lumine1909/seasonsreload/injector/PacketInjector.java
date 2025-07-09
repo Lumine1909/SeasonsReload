@@ -95,10 +95,10 @@ public class PacketInjector {
         if (palette instanceof SingleValuePalette<Holder<Biome>> single) {
             buf.writeVarInt(getModifiedId((Holder<Biome>) field$SingleValuePalette$value.get(single), world));
         } else if (palette instanceof LinearPalette<Holder<Biome>> linear) {
-            var array = (Holder<Biome>[]) field$LinearPalette$values.get(linear);
+            var array = (Object[]) field$LinearPalette$values.get(linear);
             buf.writeVarInt(linear.getSize());
             for (int i = 0; i < linear.getSize(); i++) {
-                buf.writeVarInt(getModifiedId(array[i], world));
+                buf.writeVarInt(getModifiedId((Holder<Biome>) array[i], world));
             }
         } else if (palette instanceof HashMapPalette<Holder<Biome>> hashMap) {
             var map = (CrudeIncrementalIntIdentityHashBiMap<Holder<Biome>>) field$HashMapPalette$values.get(hashMap);
