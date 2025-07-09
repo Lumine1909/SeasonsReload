@@ -39,9 +39,9 @@ public class GlobalSeasonServer extends BukkitRunnable {
         config.set("seed.global", seed);
         for (LevelSeasonServer server : levelServers.values()) {
             if (globalSeed) {
-                config.set("seed.worlds." + server.getWorld(), -1);
+                config.set("seed.worlds." + server.getWorld().getWorld(), -1);
             } else {
-                config.set("seed.worlds." + server.getWorld(), server.getSeasonSeed());
+                config.set("seed.worlds." + server.getWorld().getWorld(), server.getSeasonSeed());
             }
         }
     }
