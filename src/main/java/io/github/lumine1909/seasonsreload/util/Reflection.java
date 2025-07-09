@@ -2,8 +2,7 @@ package io.github.lumine1909.seasonsreload.util;
 
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
-import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.chunk.PalettedContainer;
+import net.minecraft.world.level.chunk.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -11,7 +10,10 @@ import java.lang.reflect.Field;
 public class Reflection {
 
     public static final Class<MappedRegistry> class$MappedRegistry = MappedRegistry.class;
-    public static final Class<?> class$PalettedContainer$Data = clazz("net.minecraft.world.level.chunk.PalettedContainer$Data");
+    public static final Class<PalettedContainer.Data> class$PalettedContainer$Data = PalettedContainer.Data.class;
+    public static final Class<SingleValuePalette> class$SingleValuePalette = SingleValuePalette.class;
+    public static final Class<LinearPalette> class$LinearPalette = LinearPalette.class;
+    public static final Class<HashMapPalette> class$HashMapPalette = HashMapPalette.class;
     public static final FieldAccessor field$MappedRegistry$frozen = new FieldAccessor(class$MappedRegistry, "frozen");
     public static final FieldAccessor field$MappedRegistry$unregIntrHolder = new FieldAccessor(class$MappedRegistry, "unregisteredIntrusiveHolders");
     public static final FieldAccessor field$PalettedContainer$data = new FieldAccessor(PalettedContainer.class, "data");
@@ -19,6 +21,9 @@ public class Reflection {
     public static final FieldAccessor field$PalettedContainer$Data$palette = new FieldAccessor(class$PalettedContainer$Data, "palette");
     public static final FieldAccessor field$ClientboundLevelChunkPacketData$buffer = new FieldAccessor(ClientboundLevelChunkPacketData.class, "buffer");
     public static final FieldAccessor field$LevelChunkSection$nonEmptyBlockCount = new FieldAccessor(LevelChunkSection.class, "nonEmptyBlockCount");
+    public static final FieldAccessor field$SingleValuePalette$value = new FieldAccessor(class$SingleValuePalette, "value");
+    public static final FieldAccessor field$LinearPalette$values = new FieldAccessor(class$LinearPalette, "values");
+    public static final FieldAccessor field$HashMapPalette$values = new FieldAccessor(class$HashMapPalette, "values");
 
     public static void copyFieldsForSubClass(Object from, Object to) {
         for (Field field : from.getClass().getDeclaredFields()) {

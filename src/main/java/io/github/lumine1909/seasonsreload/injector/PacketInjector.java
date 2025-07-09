@@ -9,22 +9,20 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.papermc.paper.network.ChannelInitializeListenerHolder;
-import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
-import net.kyori.adventure.key.Key;
 import net.minecraft.core.Holder;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundChunksBiomesPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.BitStorage;
+import net.minecraft.util.CrudeIncrementalIntIdentityHashBiMap;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.chunk.Palette;
-import net.minecraft.world.level.chunk.PalettedContainer;
+import net.minecraft.world.level.chunk.*;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -35,10 +33,11 @@ import java.util.List;
 import static io.github.lumine1909.seasonsreload.SeasonsPlugin.plugin;
 import static io.github.lumine1909.seasonsreload.util.Reflection.*;
 
+@SuppressWarnings("unchecked")
 public class PacketInjector {
 
-    private static final String handlerName = "seasons-handler";
-    private static final Key key = Key.key("seasonsreload:handler");
+    private static final String HANDLER_NAME = "seasons-handler";
+    private static final MappedRegistry<Biome> REGISTRY = (MappedRegistry<Biome>) MinecraftServer.getServer().registryAccess().lookup(Registries.BIOME).orElseThrow();
 
     public static void inject() {
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -47,7 +46,6 @@ public class PacketInjector {
     }
 
     public static void uninject() {
-        ChannelInitializeListenerHolder.removeListener(key);
         for (Player player : Bukkit.getOnlinePlayers()) {
             uninjectPlayer(player);
         }
@@ -56,17 +54,17 @@ public class PacketInjector {
     public static void injectPlayer(Player player) {
         ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
         Channel channel = serverPlayer.connection.connection.channel;
-        if (channel.pipeline().get(handlerName) != null) {
-            channel.pipeline().remove(handlerName);
+        if (channel.pipeline().get(HANDLER_NAME) != null) {
+            channel.pipeline().remove(HANDLER_NAME);
         }
-        channel.pipeline().addBefore("packet_handler", handlerName, new PacketInterceptor(player));
+        channel.pipeline().addBefore("packet_handler", HANDLER_NAME, new PacketInterceptor(player));
     }
 
     private static void uninjectPlayer(Player player) {
         ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
         Channel channel = serverPlayer.connection.connection.channel;
-        if (channel.pipeline().get(handlerName) != null) {
-            channel.pipeline().remove(handlerName);
+        if (channel.pipeline().get(HANDLER_NAME) != null) {
+            channel.pipeline().remove(HANDLER_NAME);
         }
     }
 
@@ -88,18 +86,32 @@ public class PacketInjector {
     }
 
     private static void writeBiomes(FriendlyByteBuf buf, LevelChunkSection levelChunkSection, World world) {
-        PalettedContainer<Holder<Biome>> biomeContainer = (PalettedContainer<Holder<Biome>>) levelChunkSection.getBiomes();
-        BiomeData data = new BiomeData(biomeContainer);
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                for (int k = 0; k < 4; k++) {
-                    Biome origin = biomeContainer.get(i, j, k).value();
-                    Holder<Biome> b = SeasonAccess.getFrom(origin).get(plugin.server.getLevel(world).getSeason());
-                    data.set(i, j, k, b);
-                }
+        PalettedContainer<Holder<Biome>> container = (PalettedContainer<Holder<Biome>>) levelChunkSection.getBiomes();
+        BitStorage storage = ((BitStorage) field$PalettedContainer$Data$storage.get(field$PalettedContainer$data.get(container))).copy();
+        Object containerData = field$PalettedContainer$data.get(container);
+        var palette = (Palette<Holder<Biome>>) field$PalettedContainer$Data$palette.get(containerData);
+
+        buf.writeByte(storage.getBits());
+        if (palette instanceof SingleValuePalette<Holder<Biome>> single) {
+            buf.writeVarInt(getModifiedId((Holder<Biome>) field$SingleValuePalette$value.get(single), world));
+        } else if (palette instanceof LinearPalette<Holder<Biome>> linear) {
+            var array = (Holder<Biome>[]) field$LinearPalette$values.get(linear);
+            buf.writeVarInt(linear.getSize());
+            for (int i = 0; i < linear.getSize(); i++) {
+                buf.writeVarInt(getModifiedId(array[i], world));
+            }
+        } else if (palette instanceof HashMapPalette<Holder<Biome>> hashMap) {
+            var map = (CrudeIncrementalIntIdentityHashBiMap<Holder<Biome>>) field$HashMapPalette$values.get(hashMap);
+            buf.writeVarInt(hashMap.getSize());
+            for (int i = 0; i < hashMap.getSize(); i++) {
+                buf.writeVarInt(getModifiedId(map.byId(i), world));
             }
         }
-        data.write(buf);
+        buf.writeFixedSizeLongArray(storage.getRaw());
+    }
+
+    private static int getModifiedId(Holder<Biome> origin, World world) {
+        return REGISTRY.getId(SeasonAccess.getFrom(origin.value()).get(plugin.server.getLevel(world).getSeason()).value());
     }
 
     private static final class PacketInterceptor extends ChannelDuplexHandler {
@@ -141,34 +153,6 @@ public class PacketInjector {
                 field$ClientboundLevelChunkPacketData$buffer.set(data, ByteBufUtil.getBytes(buf));
             }
             super.write(ctx, msg, promise);
-        }
-    }
-
-    record BiomeData(int[] temp, PalettedContainer<Holder<Biome>> container) {
-
-        BiomeData(PalettedContainer<Holder<Biome>> container) {
-            this(new int[64], container);
-        }
-
-        public void set(int x, int y, int z, Holder<Biome> biome) {
-            int index = (y << 2 | z) << 2 | x;
-            int id = getPalette().idFor(biome);
-            temp[index] = id;
-        }
-
-        public synchronized void write(FriendlyByteBuf buf) {
-            BitStorage storage = ((BitStorage) field$PalettedContainer$Data$storage.get(field$PalettedContainer$data.get(container))).copy();
-            for (int i = 0; i < 64; i++) {
-                storage.set(i, temp[i]);
-            }
-            buf.writeByte(storage.getBits());
-            getPalette().write(buf);
-            buf.writeFixedSizeLongArray(storage.getRaw());
-        }
-
-        private Palette<Holder<Biome>> getPalette() {
-            Object containerData = field$PalettedContainer$data.get(container);
-            return (Palette<Holder<Biome>>) field$PalettedContainer$Data$palette.get(containerData);
         }
     }
 }
